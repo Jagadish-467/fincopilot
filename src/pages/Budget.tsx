@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import { Plus, Trash2, ArrowUpRight, ArrowDownLeft, AlertTriangle } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { mockBudgetCategories, mockTransactions } from '@/data/mockData';
+import { mockBudgetCategories, mockTransactions, mockOverview } from '@/data/mockData';
 import { BudgetCategory, Transaction } from '@/types/finance';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,19 +23,29 @@ const Budget = () => {
   const [txType, setTxType] = useState<'income' | 'expense'>('expense');
   const [txNote, setTxNote] = useState('');
 
+  const monthlyIncome = mockOverview.monthlyIncome;
   const totalSpent = transactions.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
   const totalIncome = transactions.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+  const totalAllocated = categories.reduce((s, c) => s + c.allocated, 0);
   const chartData = categories.map((c) => ({ name: c.name, value: c.spent, color: c.colorHex }));
 
+  const newLimitNum = parseFloat(newLimit) || 0;
+  const wouldExceed = totalAllocated + newLimitNum > monthlyIncome;
+
   const handleAddCategory = () => {
-    if (!newName || !newLimit) return;
+    if (!newName || !newLimit || wouldExceed) return;
     setCategories((prev) => [...prev, { id: Date.now().toString(), name: newName, allocated: parseFloat(newLimit), spent: 0, colorHex: selectedColor }]);
     setNewName(''); setNewLimit('');
   };
 
   const handleAddTransaction = () => {
     if (!txAmount || !txCategory) return;
-    setTransactions((prev) => [{ id: Date.now().toString(), amount: parseFloat(txAmount), category: txCategory, date: new Date().toISOString().split('T')[0], note: txNote || undefined, type: txType }, ...prev]);
+    const newTx: Transaction = { id: Date.now().toString(), amount: parseFloat(txAmount), category: txCategory, date: new Date().toISOString().split('T')[0], note: txNote || undefined, type: txType };
+    setTransactions((prev) => [newTx, ...prev]);
+    // Update category spent if expense
+    if (txType === 'expense') {
+      setCategories((prev) => prev.map((c) => c.name.toLowerCase() === txCategory.toLowerCase() ? { ...c, spent: c.spent + parseFloat(txAmount) } : c));
+    }
     setTxAmount(''); setTxCategory(''); setTxNote('');
   };
 
@@ -52,11 +62,11 @@ const Budget = () => {
 
       {/* Chart + Categories */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="surface-card p-6">
-        <div className="flex flex-col sm:flex-row items-center gap-6">
-          <div className="w-48 h-48">
+        <div className="flex flex-col lg:flex-row items-center gap-6">
+          <div className="w-56 h-56 flex-shrink-0">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={chartData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={3} dataKey="value" strokeWidth={0}>
+                <Pie data={chartData} cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={3} dataKey="value" strokeWidth={0}>
                   {chartData.map((entry, i) => (<Cell key={i} fill={entry.color} />))}
                 </Pie>
                 <Tooltip formatter={(value: number) => `₹${value.toLocaleString('en-IN')}`} contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))', fontSize: '12px' }} />
@@ -85,20 +95,31 @@ const Budget = () => {
         </div>
       </motion.div>
 
-      {/* Add Category */}
+      {/* Add Category with validation */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="surface-card p-5">
         <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2"><Plus className="h-4 w-4 text-primary" /> {t('budget.addCategory')}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
           <Input placeholder={t('budget.categoryName')} value={newName} onChange={(e) => setNewName(e.target.value)} />
-          <Input placeholder={t('budget.monthlyLimit')} type="number" value={newLimit} onChange={(e) => setNewLimit(e.target.value)} />
-          <Button onClick={handleAddCategory} className="w-full">{t('budget.addCategoryBtn')}</Button>
+          <div>
+            <Input placeholder={t('budget.monthlyLimit')} type="number" value={newLimit} onChange={(e) => setNewLimit(e.target.value)} />
+            {wouldExceed && newLimit && (
+              <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+                <AlertTriangle className="h-3 w-3" />
+                Error: Total allocated budget cannot exceed your monthly income (₹{monthlyIncome.toLocaleString('en-IN')}).
+              </p>
+            )}
+          </div>
+          <Button onClick={handleAddCategory} disabled={wouldExceed || !newName || !newLimit} className="w-full">{t('budget.addCategoryBtn')}</Button>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs text-muted-foreground">{t('budget.color')}</span>
           {colorOptions.map((c) => (
             <button key={c} onClick={() => setSelectedColor(c)} className={`h-6 w-6 rounded-full transition-all ${selectedColor === c ? 'ring-2 ring-offset-2 ring-primary scale-110' : 'hover:scale-105'}`} style={{ backgroundColor: c }} />
           ))}
         </div>
+        <p className="text-xs text-muted-foreground mt-2">
+          Allocated: ₹{totalAllocated.toLocaleString('en-IN')} / ₹{monthlyIncome.toLocaleString('en-IN')} income
+        </p>
       </motion.div>
 
       {/* Add Transaction */}
@@ -113,7 +134,14 @@ const Budget = () => {
               <SelectItem value="expense">{t('budget.expenseType')}</SelectItem>
             </SelectContent>
           </Select>
-          <Input placeholder={t('budget.category')} value={txCategory} onChange={(e) => setTxCategory(e.target.value)} />
+          <Select value={txCategory} onValueChange={setTxCategory}>
+            <SelectTrigger><SelectValue placeholder={t('budget.category')} /></SelectTrigger>
+            <SelectContent>
+              {categories.map((c) => (
+                <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Input placeholder={t('budget.noteOptional')} value={txNote} onChange={(e) => setTxNote(e.target.value)} />
           <Button onClick={handleAddTransaction} className="w-full">{t('budget.add')}</Button>
         </div>

@@ -3,13 +3,16 @@ import { Link } from 'react-router-dom';
 import { Leaf, ArrowRight, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from 'react-i18next';
+import RainingRupees from '@/components/RainingRupees';
 
 const Index = () => {
   const { t } = useTranslation();
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <header className="flex items-center justify-between px-6 lg:px-12 py-5">
+    <div className="min-h-screen bg-background flex flex-col relative">
+      <RainingRupees />
+
+      <header className="relative z-10 flex items-center justify-between px-6 lg:px-12 py-5">
         <div className="flex items-center gap-2">
           <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center">
             <Leaf className="h-5 w-5 text-primary-foreground" />
@@ -17,13 +20,17 @@ const Index = () => {
           <span className="text-xl font-bold text-foreground">FinCopilot</span>
         </div>
         <Link to="/auth">
-          <Button variant="outline" size="sm" className="text-sm">
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-sm border-2 border-primary text-primary bg-transparent hover:bg-primary hover:text-primary-foreground transition-all"
+          >
             {t('landing.login')}
           </Button>
         </Link>
       </header>
 
-      <section className="flex-1 flex flex-col items-center justify-center px-6 py-16 lg:py-24">
+      <section className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 py-16 lg:py-24">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -61,7 +68,7 @@ const Index = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5, duration: 0.6 }}
-        className="border-t border-border py-8 px-6 text-center space-y-2"
+        className="relative z-10 border-t border-border py-8 px-6 text-center space-y-2"
       >
         <p className="text-sm font-semibold text-foreground tracking-wide">
           {t('landing.footer1')}
