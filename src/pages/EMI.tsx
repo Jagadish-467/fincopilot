@@ -15,7 +15,7 @@ interface SimVar { label: string; key: string; value: number; min: number; max: 
 
 const EMI = () => {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState('matcher');
+  const [activeTab, setActiveTab] = useState('decompiler');
   const [prefillScheme, setPrefillScheme] = useState<LoanScheme | null>(null);
 
   // Loan Decompiler state
@@ -75,16 +75,6 @@ const EMI = () => {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-4 mb-4">
-          <TabsTrigger value="matcher" className="gap-1 text-xs sm:text-sm">
-            <Search className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">{t('matcher.tab')}</span>
-            <span className="sm:hidden">{t('matcher.tabShort')}</span>
-          </TabsTrigger>
-          <TabsTrigger value="sandbox" className="gap-1 text-xs sm:text-sm">
-            <GitCompareArrows className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">{t('sandbox.tab')}</span>
-            <span className="sm:hidden">{t('sandbox.tabShort')}</span>
-          </TabsTrigger>
           <TabsTrigger value="decompiler" className="gap-1 text-xs sm:text-sm">
             <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
             <span className="hidden sm:inline">{t('emi.loanDecompiler')}</span>
@@ -95,31 +85,19 @@ const EMI = () => {
             <span className="hidden sm:inline">{t('emi.calculator')}</span>
             <span className="sm:hidden">EMI</span>
           </TabsTrigger>
+          <TabsTrigger value="matcher" className="gap-1 text-xs sm:text-sm">
+            <Search className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">{t('matcher.tab')}</span>
+            <span className="sm:hidden">{t('matcher.tabShort')}</span>
+          </TabsTrigger>
+          <TabsTrigger value="sandbox" className="gap-1 text-xs sm:text-sm">
+            <GitCompareArrows className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">{t('sandbox.tab')}</span>
+            <span className="sm:hidden">{t('sandbox.tabShort')}</span>
+          </TabsTrigger>
         </TabsList>
 
-        {/* Smart Scheme Matcher */}
-        <TabsContent value="matcher">
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="surface-card p-5">
-            <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-              <Search className="h-4 w-4 text-primary" />
-              {t('matcher.title')}
-            </h2>
-            <SmartSchemeMatcher onCompareInSandbox={handleCompareInSandbox} />
-          </motion.div>
-        </TabsContent>
-
-        {/* Pre-Loan Sandbox */}
-        <TabsContent value="sandbox">
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="surface-card p-5">
-            <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-              <GitCompareArrows className="h-4 w-4 text-primary" />
-              {t('sandbox.title')}
-            </h2>
-            <PreLoanSandbox prefillScheme={prefillScheme} />
-          </motion.div>
-        </TabsContent>
-
-        {/* Loan Decompiler */}
+        {/* Loan Decompiler - now first */}
         <TabsContent value="decompiler">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="surface-card p-5">
@@ -169,7 +147,7 @@ const EMI = () => {
           </div>
         </TabsContent>
 
-        {/* EMI Calculator */}
+        {/* EMI Calculator - now second */}
         <TabsContent value="calculator" className="space-y-6">
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="surface-card p-6 space-y-5">
             <h2 className="text-sm font-semibold text-foreground flex items-center gap-2"><TrendingUp className="h-4 w-4 text-primary" /> {t('emi.calculator')}</h2>
@@ -221,6 +199,28 @@ const EMI = () => {
               {suggestions.map((s, i) => (<div key={i} className="surface-card p-4 flex items-start gap-3"><Lightbulb className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" /><p className="text-sm text-muted-foreground">{s.text}</p></div>))}
             </motion.div>
           )}
+        </TabsContent>
+
+        {/* Smart Scheme Matcher - now third */}
+        <TabsContent value="matcher">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="surface-card p-5">
+            <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Search className="h-4 w-4 text-primary" />
+              {t('matcher.title')}
+            </h2>
+            <SmartSchemeMatcher onCompareInSandbox={handleCompareInSandbox} />
+          </motion.div>
+        </TabsContent>
+
+        {/* Pre-Loan Sandbox - now fourth */}
+        <TabsContent value="sandbox">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="surface-card p-5">
+            <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+              <GitCompareArrows className="h-4 w-4 text-primary" />
+              {t('sandbox.title')}
+            </h2>
+            <PreLoanSandbox prefillScheme={prefillScheme} />
+          </motion.div>
         </TabsContent>
       </Tabs>
     </div>

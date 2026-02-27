@@ -1,14 +1,23 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
+import { Plus, ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown, Wallet, PiggyBank } from 'lucide-react';
 import { mockOverview, mockTransactions } from '@/data/mockData';
 import { Transaction } from '@/types/finance';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useTranslation } from 'react-i18next';
+import { useAppContext } from '@/contexts/AppContext';
+
+const getGreeting = (): string => {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good Morning';
+  if (hour < 17) return 'Good Afternoon';
+  return 'Good Evening';
+};
 
 const Dashboard = () => {
   const { t } = useTranslation();
+  const { userProfile } = useAppContext();
   const [transactions, setTransactions] = useState<Transaction[]>(mockTransactions);
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('');
@@ -17,6 +26,7 @@ const Dashboard = () => {
   const overview = mockOverview;
   const dynamicExpenses = transactions.filter((tx) => tx.type === 'expense').reduce((s, tx) => s + tx.amount, 0);
   const dynamicIncome = transactions.filter((tx) => tx.type === 'income').reduce((s, tx) => s + tx.amount, 0);
+  const savings = dynamicIncome - dynamicExpenses;
 
   const handleAddTransaction = () => {
     if (!amount || !category) return;
@@ -25,18 +35,21 @@ const Dashboard = () => {
     setAmount(''); setCategory(''); setNote('');
   };
 
+  const displayName = userProfile.firstName || 'there';
+
   return (
     <div className="max-w-5xl mx-auto px-4 lg:px-8 py-6 lg:py-10 space-y-6">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl lg:text-3xl font-bold text-foreground">{t('dashboard.greeting')}</h1>
+        <h1 className="text-2xl lg:text-3xl font-bold text-foreground">{getGreeting()}, {displayName} 👋</h1>
         <p className="text-muted-foreground text-sm mt-1">{t('dashboard.snapshot')}</p>
       </motion.div>
 
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
           { label: t('dashboard.totalBalance'), value: overview.totalBalance, icon: Wallet, positive: true },
           { label: t('dashboard.monthlyIncome'), value: dynamicIncome, icon: TrendingUp, positive: true },
           { label: t('dashboard.monthlyExpenses'), value: dynamicExpenses, icon: TrendingDown, positive: false },
+          { label: 'Your Savings', value: savings, icon: PiggyBank, positive: savings >= 0 },
         ].map((card) => (
           <div key={card.label} className="surface-card p-4">
             <div className="flex items-center justify-between mb-2">

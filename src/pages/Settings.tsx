@@ -9,10 +9,12 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { mockOverview, mockTransactions } from '@/data/mockData';
 import { useTranslation } from 'react-i18next';
+import { useToast } from '@/hooks/use-toast';
 
 const Settings = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { logout, scholarshipEnabled, setScholarshipEnabled, language, setLanguage, userProfile, updateProfile } = useAppContext();
   const [firstName, setFirstName] = useState(userProfile.firstName);
   const [lastName, setLastName] = useState(userProfile.lastName);
@@ -27,7 +29,10 @@ const Settings = () => {
     if (file) { setProfilePreview(URL.createObjectURL(file)); }
   };
 
-  const handleSave = () => { updateProfile({ firstName, lastName, profilePhoto: profilePreview }); };
+  const handleSave = () => {
+    updateProfile({ firstName, lastName, profilePhoto: profilePreview });
+    toast({ title: 'Profile saved!' });
+  };
 
   const handleLanguageChange = (v: 'en' | 'hi' | 'te') => {
     setLanguage(v);
@@ -42,7 +47,10 @@ const Settings = () => {
     else { if (window.matchMedia('(prefers-color-scheme: dark)').matches) root.classList.add('dark'); else root.classList.remove('dark'); }
   };
 
-  const handleLogout = () => { logout(); navigate('/auth'); };
+  const handleLogout = async () => {
+    await logout();
+    navigate('/auth');
+  };
 
   return (
     <div className="max-w-lg mx-auto px-4 lg:px-8 py-6 lg:py-10 space-y-6">
